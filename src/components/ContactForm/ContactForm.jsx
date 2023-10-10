@@ -1,68 +1,51 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { Form, Label } from './ContactForm.styled';
 
-export class ContactForm extends Component {
-  state = {
-    name: '',
-    phone: '',
-  };
+const schema = yup.object({
+  name: yup.string().required('Name is required').trim(),
+  phone: yup
+    .number()
+    .typeError("That doesn't look like a phone number")
+    .positive("A phone number can't start with a minus")
+    .integer("A phone number can't include a decimal point")
+    .min(8)
+    .required('A phone number is required'),
+});
 
-  handleInput = evt => {
-    const { name, value } = evt.currentTarget;
-    this.setState({ [name]: value });
-  };
+export const ContactForm = ({ addContact }) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
 
-  submitForm = evt => {
-    evt.preventDefault();
-    const { addContact } = this.props;
-    const newContact = this.state;
-
-    const keys = Object.keys(newContact);
-    keys.forEach(item => {
-      newContact[item] = newContact[item].trim();
-    });
-
-    const isExistingContact = addContact(newContact);
+  const onSubmit = data => {
+    const isExistingContact = addContact(data);
     if (isExistingContact) {
       return;
     }
-
-    this.resetForm();
+    reset();
   };
 
-  resetForm = () => {
-    this.setState({
-      name: '',
-      phone: '',
-    });
-  };
-
-  render() {
-    const { name, phone } = this.state;
-    return (
-      <Form onSubmit={this.submitForm}>
-        <Label>
-          Name
-          <input
-            type="text"
-            name="name"
-            value={name}
-            onChange={this.handleInput}
-            required
-          />
-        </Label>
-        <Label>
-          Phone
-          <input
-            type="tel"
-            name="phone"
-            value={phone}
-            onChange={this.handleInput}
-            required
-          />
-        </Label>
-        <button type="submit">Add contact</button>
-      </Form>
-    );
-  }
-}
+  return (
+    <Form onSubmit={handleSubmit(onSubmit)}>
+      <Label>
+        Name
+        <input {...register('name')} />
+        <p>{errors.name?.message}</p>
+      </Label>
+      <Label>
+        Phone
+        <input {...register('phone')} />
+        <p>{errors.phone?.message}</p>
+      </Label>
+      <button type="submit">Add contact</button>
+    </Form>
+  );
+};

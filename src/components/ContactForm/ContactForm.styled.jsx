@@ -38,4 +38,8 @@ export const Label = styled.label`
     width: 100%;
     border: 1px solid #dedede;
   }
+
+  p {
+    color: red;
+  }
 `;
